@@ -9,6 +9,7 @@ from mailing.models import Mailing, Logs
 
 
 def start_mailing():
+    """Функция запуска рассылки"""
     now = datetime.now(timezone.utc)
     mailing_list = Mailing.objects.filter(last_time__lte=now)
     for mailing in mailing_list:
@@ -25,7 +26,7 @@ def start_mailing():
 
             )
             if mailing.interval == 'onetime':
-                # mailing.last_time = None
+                mailing.last_time = None
                 mailing.mailing_status = 'completed'
             elif mailing.interval == '1':
                 mailing.last_time = F('last_time') + timedelta(days=1)

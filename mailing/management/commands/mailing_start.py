@@ -4,7 +4,7 @@ from mailing.services import start_mailing
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **options):
         start_mailing()
 
 

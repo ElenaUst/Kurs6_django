@@ -3,6 +3,7 @@ from blog.models import Blog
 
 
 class StyleMixin(forms.ModelForm):
+    """Миксин для вывода формы для блога"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -17,7 +18,7 @@ class StyleMixin(forms.ModelForm):
 
 
 class BlogForm(StyleMixin):
-
+    """Класс формы для блога"""
     class Meta:
         model = Blog
         exclude = ('slug', 'create_date', 'view_count',)

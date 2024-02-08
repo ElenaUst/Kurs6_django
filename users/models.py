@@ -22,6 +22,9 @@ class User(AbstractUser):
              'set_user_deactivate',
              'Can deactivate user'
             ),
+            ('view_all_users',
+             'просмотр всех пользователей'
+             ),
         ]
 
 

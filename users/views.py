@@ -1,15 +1,14 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import CreateView, UpdateView, TemplateView, ListView, DetailView
+from django.views.generic import CreateView, UpdateView, TemplateView, ListView
 
 from users.forms import UserRegisterForm, UserForm
 from users.models import User
@@ -48,19 +47,11 @@ class RegisterView(CreateView):
 class UserUpdateView(LoginRequiredMixin, UpdateView):
     """Класс для изменения данных пользователя"""
     model = User
-    success_url = reverse_lazy('users:users_list')
+    success_url = reverse_lazy('users:profile')
     form_class = UserForm
 
     def get_object(self, queryset=None):
         return self.request.user
-
-    # def get_form_class(self):
-    #     if self.request.user or self.request.user.is_superuser:
-    #         return UserForm
-    #     elif self.request.user.has_perm('users.set_user_deactivate'):
-    #         return ManagerUserForm
-    #     else:
-    #         raise Http404('Вы не имеете права на редактирование пользователей')
 
 
 def activate(request, uidb64, token):
@@ -78,28 +69,29 @@ def activate(request, uidb64, token):
         return redirect('users:verification_failed')
 
 
-class UserListView(ListView):
+class UserListView(PermissionRequiredMixin, ListView):
     """Класс для просмотра списка пользователей"""
+    permission_required = 'users.view_all_users'
     model = User
-    success_url = reverse_lazy('users:users_list')
-    template_name = 'users/user_list.html'
-    # def get_queryset(self):
-    #     """Метод для вывода пользователей исключая себя"""
-    #
-    #     return super().get_queryset().exclude(pk=self.request.user.pk, is_superuser=True)
 
+    def get_queryset(self):
+        """Метод для вывода пользователей исключая себя"""
 
-class UserDetailView(DetailView):
-    model = User
-    success_url = reverse_lazy('users:profile')
-    template_name = 'users/user_detail.html'
-
-    # def get_queryset(self):
-    #     """Метод для вывода пользователей исключая себя"""
-    #
-    #     return super().get_queryset().exclude(pk=self.request.user.pk, is_superuser=True)
+        return super().get_queryset().exclude(pk=self.request.user.pk).exclude(is_superuser=True)
 
 
 class VerificationFailedView(TemplateView):
     """Класс для неуспешной регистрации пользователя"""
     template_name = 'users/verification_failed.html'
+
+
+@permission_required('users.set_user_deactivate')
+def toggle_active(request, pk):
+    """Пермиссия: функция для активации/деактивации пользователя"""
+    user = User.objects.get(pk=pk)
+    if user.is_active:
+        user.is_active = False
+    else:
+        user.is_active = True
+    user.save()
+    return redirect(reverse('users:users'))

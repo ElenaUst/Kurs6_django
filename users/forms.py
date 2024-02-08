@@ -22,9 +22,3 @@ class UserForm(UserChangeForm):
 
         self.fields['password'].widget = forms.HiddenInput()
 
-
-# class ManagerUserForm(UserForm):
-#     """Класс формы пользователя для менеджера"""
-#     class Meta:
-#         model = User
-#         fields = ('is_active',)

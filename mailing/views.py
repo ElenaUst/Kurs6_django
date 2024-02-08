@@ -8,19 +8,22 @@ from django.views.generic import CreateView, UpdateView, ListView, DetailView, D
 from blog.models import Blog
 from mailing.forms import MailingForm, MessageForm, ClientForm, ManagerMailingForm
 from mailing.models import Mailing, Message, Client, Logs
+from users.utils import UserRequiredMixin
 
 
 def index(request):
+    """Функция для отображения данных на главной странице"""
     count_mailing = Mailing.objects.all()
     active_mailing = Mailing.objects.filter(mailing_status='launched')
     count_unique_client = Client.objects.values('email').distinct()
     articles = Blog.objects.order_by('?')[:3]
-    context = {'count_mailing': count_mailing, 'active_mailing': active_mailing, 'count_unique_client': count_unique_client, 'articles': articles}
+    context = {'count_mailing': count_mailing, 'active_mailing': active_mailing,
+               'count_unique_client': count_unique_client, 'articles': articles}
 
     return render(request, 'users/index.html', context)
 
 
-class MailingCreateView(LoginRequiredMixin, CreateView):
+class MailingCreateView(LoginRequiredMixin, UserRequiredMixin, CreateView):
     """Класс для создания новой рассылки"""
     model = Mailing
     form_class = MailingForm
@@ -49,17 +52,25 @@ class MailingUpdateView(LoginRequiredMixin, UpdateView):
             raise Http404('Вы не имеете права на редактирование рассылок')
 
 
-class MailingListView(ListView):
+class MailingListView(LoginRequiredMixin,ListView):
     """Класс для просмотра списка рассылок"""
     model = Mailing
 
+    def get_queryset(self):
+        if self.request.user.has_perm('mailing.view_all_mailings'):
+            mailing_list = super().get_queryset()
+        else:
+            mailing_list = super().get_queryset().filter(user_id=self.request.user)
 
-class MailingDetailView(DetailView):
+        return mailing_list
+
+
+class MailingDetailView(UserRequiredMixin, DetailView):
     """Класс для просмотра отдельной рассылки"""
     model = Mailing
 
 
-class MailingDeleteView(LoginRequiredMixin, DeleteView):
+class MailingDeleteView(LoginRequiredMixin, UserRequiredMixin, DeleteView):
     """Класс для удаления рассылки"""
     model = Mailing
     success_url = reverse_lazy('mailing:index')
@@ -101,8 +112,8 @@ class MessageDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('mailing:message_list')
 
 
-class ClientCreateView(LoginRequiredMixin, CreateView):
-    """Класс для создания новой рассылки"""
+class ClientCreateView(LoginRequiredMixin, UserRequiredMixin, CreateView):
+    """Класс для создания нового клиента для рассылки"""
     model = Client
     form_class = ClientForm
     success_url = reverse_lazy('mailing:client_list')
@@ -114,25 +125,25 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ClientUpdateView(LoginRequiredMixin, UpdateView):
-    """Класс для изменения сообщения для рассылки"""
+class ClientUpdateView(LoginRequiredMixin, UserRequiredMixin, UpdateView):
+    """Класс для изменения клиента для рассылки"""
     model = Client
     form_class = ClientForm
     success_url = reverse_lazy('mailing:client_list')
 
 
-class ClientListView(ListView):
-    """Класс для просмотра списка сообщений для рассылок"""
+class ClientListView(UserRequiredMixin, ListView):
+    """Класс для просмотра списка клиентов для рассылок"""
     model = Client
 
 
-class ClientDetailView(DetailView):
-    """Класс для просмотра отдельного сообщения для рассылки"""
+class ClientDetailView(UserRequiredMixin, DetailView):
+    """Класс для просмотра отдельного клиента для рассылки"""
     model = Client
 
 
-class ClientDeleteView(LoginRequiredMixin, DeleteView):
-    """Класс для удаления сообщения для рассылки"""
+class ClientDeleteView(LoginRequiredMixin, UserRequiredMixin, DeleteView):
+    """Класс для удаления клиента для рассылки"""
     model = Client
     success_url = reverse_lazy('mailing:client_list')
 
@@ -151,9 +162,9 @@ class LogsListView(LoginRequiredMixin, ListView):
     """Вывод списка логов рассылок пользователя"""
     model = Logs
 
-    # def get_queryset(self):
-    #     """Метод для вывода логов только текущего пользователя"""
-    #     return super().get_queryset().filter(user=self.request.user)
+    def get_queryset(self):
+        """Метод для вывода логов только текущего пользователя"""
+        return super().get_queryset().filter(user=self.request.user)
 
 
 

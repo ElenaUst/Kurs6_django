@@ -6,6 +6,7 @@ from blog.models import Blog
 
 
 class BlogCreateView(PermissionRequiredMixin, CreateView):
+    """Класс создания статьи блога"""
     permission_required = 'blog.add_blog'
     model = Blog
     fields = ('title', 'content', 'preview', 'is_public',)
@@ -20,6 +21,7 @@ class BlogCreateView(PermissionRequiredMixin, CreateView):
 
 
 class BlogUpdateView(PermissionRequiredMixin, UpdateView):
+    """Класс редактирования статьи блога"""
     permission_required = 'blog.change_blog'
     model = Blog
     fields = ('title', 'content', 'preview', 'is_public',)
@@ -36,12 +38,14 @@ class BlogUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class BlogDeleteView(PermissionRequiredMixin, DeleteView):
+    """Класс удаления статьи блога"""
     permission_required = 'blog.delete_blog'
     model = Blog
     success_url = reverse_lazy('blog:list')
 
 
 class BlogListView(ListView):
+    """Класс просмотра списка статей блога"""
     model = Blog
 
     def get_queryset(self, *args, **kwargs):
@@ -51,6 +55,7 @@ class BlogListView(ListView):
 
 
 class BlogDetailView(DetailView):
+    """Класс просмотра статьи блога"""
     model = Blog
 
     def get_object(self, queryset=None):

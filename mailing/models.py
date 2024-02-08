@@ -66,6 +66,10 @@ class Mailing(models.Model):
                 'set_deactivate',
                 'Can deactivate mailing'
             ),
+            (
+                'view_all_mailings',
+                'Can view all mailing'
+            ),
         ]
 
 
